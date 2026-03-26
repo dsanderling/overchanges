@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.musicca.com)",
+      "Bash(distrobox list:*)",
+      "Bash(flatpak-spawn --host distrobox:*)"
+    ]
+  }
+}
