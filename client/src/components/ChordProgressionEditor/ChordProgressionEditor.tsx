@@ -117,7 +117,7 @@ const ChordProgressionEditor = () => {
                 </div>
                 <FretboardDisplay
                     scaleTones={currentAnalysis.scaleTones}
-                    targetTones={nextAnalysis?.chordTones ?? []}
+                    targetTones={nextAnalysis?.chordTones ?? analysis[0].chordTones}
                     activeStrings={activeStringSet.strings}
                 />
             </div>
