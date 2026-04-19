@@ -46,7 +46,7 @@ const ChordProgressionEditor = () => {
     };
 
     const currentAnalysis = analysis[currentChordIndex];
-    const nextAnalysis = analysis[currentChordIndex + 1];
+    const nextAnalysis = currentChordIndex < analysis.length-1 ? analysis[currentChordIndex + 1] : analysis[0];
 
     return (
         <>
@@ -90,16 +90,16 @@ const ChordProgressionEditor = () => {
                     </div>
                     <div className="flex items-center gap-2">
                         <input type="checkbox" checked={showBlue} onChange={e => setShowBlue(e.target.checked)} />
-                        <label>Show current chord</label>
+                        <label>Show current chord's mode</label>
                     </div>
                 </div>
                 <div className="text-sm text-gray-400">
-                    {showBlue && <> <span className="text-blue-400 font-semibold">Blue</span> = {currentAnalysis.root} {currentAnalysis.mode} scale </>}
-                    {nextAnalysis && <> &nbsp;·&nbsp; <span className="text-amber-400 font-semibold">Amber</span> = {nextAnalysis.root} {nextAnalysis.quality} tones (next chord)</>}
+                    {showBlue && <> <span className="text-blue-400 font-semibold">Blue</span> = {currentAnalysis.root} {currentAnalysis.mode} scale &nbsp;·&nbsp;  </>}
+                    <span className="text-amber-400 font-semibold">Amber</span> = {nextAnalysis.root} {nextAnalysis.quality} tones (next chord)
                 </div>
                 <FretboardDisplay
                     scaleTones={currentAnalysis.scaleTones}
-                    targetTones={nextAnalysis?.chordTones ?? analysis[0].chordTones}
+                    targetTones={nextAnalysis.chordTones}
                     activeStrings={activeStringSet.strings}
                     showCurrentChord={showBlue}
                 />
