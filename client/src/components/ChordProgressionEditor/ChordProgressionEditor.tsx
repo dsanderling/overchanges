@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from "react";
-import * as Tone from 'tone';
+import { useState, useEffect } from "react";
 import type { Chord } from "../../types/chord";
 import ChordBox from "../ChordBox/ChordBox";
 import ChordPicker from "../ChordPicker/ChordPicker";
 import FretboardDisplay, { STRING_SETS } from "../FretboardDisplay/FretboardDisplay";
-import { strumChord, tick } from "../../utils/chordAudio";
+import { usePlayback } from "../../utils/usePlayback";
 
 interface ChordAnalysis {
     root: string;
@@ -15,42 +14,16 @@ interface ChordAnalysis {
     mode: string;
 }
 
-const getTotalBeats = (chords: Chord[]) => chords.reduce((s, c) => s + c.beats, 0);
-
-const getChordIdxForBeat = (beat: number, chords: Chord[], loop: boolean): number | null => {
-    const total = getTotalBeats(chords);
-    if (total === 0) return null;
-    const b = loop ? beat % total : beat;
-    if (b >= total) return null;
-    let acc = 0;
-    for (let i = 0; i < chords.length; i++) {
-        acc += chords[i].beats;
-        if (b < acc) return i;
-    }
-    return null;
-};
-
 const ChordProgressionEditor = () => {
     const [chords, setChords] = useState<Chord[]>([]);
     const [analysis, setAnalysis] = useState<ChordAnalysis[]>([]);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
-    const [isPlaying, setIsPlaying] = useState<boolean>(false);
-    const [currentChordIndex, setCurrentChordIndex] = useState<number>(0);
     const [bpm, setBpm] = useState<number>(120);
     const [shouldLoop, setShouldLoop] = useState<boolean>(true);
     const [activeStringSet, setActiveStringSet] = useState(STRING_SETS[0]);
     const [showBlue, setShowBlue] = useState<boolean>(true);
 
-    // Refs so the Transport callback always sees fresh values
-    const analysisRef = useRef(analysis);
-    const chordsRef = useRef(chords);
-    const shouldLoopRef = useRef(shouldLoop);
-    const beatRef = useRef(0);
-    const prevChordIdxRef = useRef(-1);
-
-    useEffect(() => { analysisRef.current = analysis; }, [analysis]);
-    useEffect(() => { chordsRef.current = chords; }, [chords]);
-    useEffect(() => { shouldLoopRef.current = shouldLoop; }, [shouldLoop]);
+    const { isPlaying, currentChordIndex, handlePlayStop } = usePlayback(chords, analysis, bpm, shouldLoop);
 
     useEffect(() => {
         if (chords.length === 0) { setAnalysis([]); return; }
@@ -62,58 +35,6 @@ const ChordProgressionEditor = () => {
             .then(r => r.json())
             .then(data => setAnalysis(data.analysis));
     }, [chords]);
-
-    const stopPlayback = () => {
-        const transport = Tone.getTransport();
-        transport.stop();
-        transport.cancel();
-        setIsPlaying(false);
-        setCurrentChordIndex(0);
-        beatRef.current = 0;
-        prevChordIdxRef.current = -1;
-    };
-
-    const startPlayback = async () => {
-        await Tone.start();
-        beatRef.current = 0;
-        prevChordIdxRef.current = -1;
-
-        const transport = Tone.getTransport();
-        transport.cancel();
-        transport.bpm.value = bpm;
-
-        transport.scheduleRepeat((time) => {
-            const beat = beatRef.current;
-            const chords = chordsRef.current;
-            const analysis = analysisRef.current;
-
-            const chordIdx = getChordIdxForBeat(beat, chords, shouldLoopRef.current);
-
-            if (chordIdx === null) {
-                Tone.getDraw().schedule(() => stopPlayback(), time);
-                return;
-            }
-
-            tick(time);
-
-            if (chordIdx !== prevChordIdxRef.current) {
-                const chordAnalysis = analysis[chordIdx];
-                if (chordAnalysis) strumChord(chordAnalysis.chordTones, time);
-                prevChordIdxRef.current = chordIdx;
-            }
-
-            Tone.getDraw().schedule(() => setCurrentChordIndex(chordIdx), time);
-            beatRef.current += 1;
-        }, '4n');
-
-        transport.start();
-        setIsPlaying(true);
-    };
-
-    const handlePlayStop = () => {
-        if (isPlaying) stopPlayback();
-        else startPlayback();
-    };
 
     const handleSelect = (chord: Chord) => {
         if (editingIndex === -1) {
@@ -140,11 +61,7 @@ const ChordProgressionEditor = () => {
                 className="bg-gray-700 text-white rounded p-2 w-20 text-center"
                 type="text"
                 value={bpm}
-                onChange={e => {
-                    const val = Number(e.target.value);
-                    setBpm(val);
-                    Tone.getTransport().bpm.value = val;
-                }}
+                onChange={e => setBpm(Number(e.target.value))}
             />
             <label>bpm</label>
             <button
