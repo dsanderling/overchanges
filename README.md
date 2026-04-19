@@ -1,8 +1,8 @@
-# Fretboard Flow
+# Overchanges
 
 A full-stack web app for guitarists practicing soloing over chord changes. Build a chord progression, hit play, and the fretboard shows you exactly what to play — the scale you can noodle with on the current chord, and the target chord tones to aim for as the next chord approaches.
 
-![Fretboard Flow](https://img.shields.io/badge/status-active%20development-brightgreen)
+![Overchanges](https://img.shields.io/badge/status-active%20development-brightgreen)
 
 ## What it does
 
