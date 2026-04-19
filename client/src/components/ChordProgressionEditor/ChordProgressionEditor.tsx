@@ -2,27 +2,49 @@ import { useState, useEffect } from "react";
 import type { Chord } from "../../types/chord";
 import ChordBox from "../ChordBox/ChordBox";
 import ChordPicker from "../ChordPicker/ChordPicker";
+import FretboardDisplay from "../FretboardDisplay/FretboardDisplay";
 import { playTick } from "../../utils/audio";
+
+interface ChordAnalysis {
+    root: string;
+    quality: string;
+    beats: number;
+    chordTones: string[];
+    scaleTones: string[];
+    mode: string;
+}
 
 const ChordProgressionEditor = () => {
     const [chords, setChords] = useState<Chord[]>([]);
+    const [analysis, setAnalysis] = useState<ChordAnalysis[]>([]);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [currentBeat, setCurrentBeat] = useState<number>(0);
     const [bpm, setBpm] = useState<number>(120);
     const [shouldLoop, setShouldLoop] = useState<boolean>(true);
 
-    useEffect(() => { // runs when dependencies change
+    useEffect(() => {
+        if (chords.length === 0) { setAnalysis([]); return; }
+        fetch('http://localhost:5000/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chords }),
+        })
+            .then(r => r.json())
+            .then(data => setAnalysis(data.analysis));
+    }, [chords]);
+
+    useEffect(() => {
         if(!isPlaying) {
             setCurrentBeat(0);
             return;
         }
-        const interval = setInterval(() => { 
+        const interval = setInterval(() => {
             setCurrentBeat(prev => prev + 1);
         }, 60000/bpm);
 
-        return () => clearInterval(interval); //cleanup
-    }, [isPlaying, bpm]); // dependencies
+        return () => clearInterval(interval);
+    }, [isPlaying, bpm]);
 
     useEffect(() => {
         if (!isPlaying) return;
@@ -36,12 +58,11 @@ const ChordProgressionEditor = () => {
     const handleSelect = (chord: Chord) => {
         if (editingIndex === -1) {
             setChords([...chords, chord]);
-        }
-        else {
-            setChords(chords.map((c,i) => i === editingIndex ? chord : c));
+        } else {
+            setChords(chords.map((c, i) => i === editingIndex ? chord : c));
         }
         setEditingIndex(null);
-    }
+    };
 
     const getCurrentChordIndex = () => {
         let beats = 0;
@@ -49,9 +70,12 @@ const ChordProgressionEditor = () => {
             beats += chords[i].beats;
             if (currentBeat < beats) return i;
         }
-        return null; // past the end
+        return null;
     };
-    const currentChordIndex = getCurrentChordIndex();
+
+    const currentChordIndex = getCurrentChordIndex() ?? 0;
+    const currentAnalysis = analysis[currentChordIndex];
+    const nextAnalysis = analysis[currentChordIndex + 1];
 
     return (
         <>
@@ -69,10 +93,23 @@ const ChordProgressionEditor = () => {
             <button className={`${isPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-green-600 hover:bg-green-500'} text-white font-bold px-6 py-2 rounded-lg`} onClick={() => setIsPlaying(!isPlaying)}>
                 {isPlaying ? 'Stop' : 'Play'}
             </button>
-            <input type="checkbox" checked={shouldLoop} onChange={e => setShouldLoop(e.target.checked)}></input> <label>Loop?</label>
+            <input type="checkbox" checked={shouldLoop} onChange={e => setShouldLoop(e.target.checked)} />
+            <label>Loop</label>
         </div>
-        {editingIndex!==null && (
-            <ChordPicker onSelect={handleSelect} onCancel={()=>{setEditingIndex(null);}} initialChord={editingIndex>=0 ? chords[editingIndex] : undefined} />
+        {currentAnalysis && (
+            <div className="mt-6 flex flex-col gap-2">
+                <div className="text-sm text-gray-400">
+                    <span className="text-blue-400 font-semibold">Blue</span> = {currentAnalysis.root} {currentAnalysis.mode} scale
+                    {nextAnalysis && <> &nbsp;·&nbsp; <span className="text-amber-400 font-semibold">Amber</span> = {nextAnalysis.root} {nextAnalysis.quality} tones (next chord)</>}
+                </div>
+                <FretboardDisplay
+                    scaleTones={currentAnalysis.scaleTones}
+                    targetTones={nextAnalysis?.chordTones ?? []}
+                />
+            </div>
+        )}
+        {editingIndex !== null && (
+            <ChordPicker onSelect={handleSelect} onCancel={() => setEditingIndex(null)} initialChord={editingIndex >= 0 ? chords[editingIndex] : undefined} />
         )}
         </>
     );
