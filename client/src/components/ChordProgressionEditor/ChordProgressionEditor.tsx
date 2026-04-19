@@ -4,6 +4,7 @@ import ChordBox from "../ChordBox/ChordBox";
 import ChordPicker from "../ChordPicker/ChordPicker";
 import FretboardDisplay, { STRING_SETS } from "../FretboardDisplay/FretboardDisplay";
 import { playTick } from "../../utils/audio";
+import { strumChord } from "../../utils/chordAudio";
 
 interface ChordAnalysis {
     root: string;
@@ -23,6 +24,17 @@ const ChordProgressionEditor = () => {
     const [bpm, setBpm] = useState<number>(120);
     const [shouldLoop, setShouldLoop] = useState<boolean>(true);
     const [activeStringSet, setActiveStringSet] = useState(STRING_SETS[0]);
+
+    const getCurrentChordIndex = () => {
+        let beats = 0;
+        for (let i = 0; i < chords.length; i++) {
+            beats += chords[i].beats;
+            if (currentBeat < beats) return i;
+        }
+        return null;
+    };
+
+    const currentChordIndex = getCurrentChordIndex() ?? 0;
 
     useEffect(() => {
         if (chords.length === 0) { setAnalysis([]); return; }
@@ -56,6 +68,12 @@ const ChordProgressionEditor = () => {
         playTick();
     }, [currentBeat]);
 
+    useEffect(() => {
+        if (!isPlaying) return;
+        const chordAnalysis = analysis[currentChordIndex];
+        if (chordAnalysis) strumChord(chordAnalysis.chordTones);
+    }, [currentChordIndex, isPlaying]);
+
     const handleSelect = (chord: Chord) => {
         if (editingIndex === -1) {
             setChords([...chords, chord]);
@@ -65,16 +83,6 @@ const ChordProgressionEditor = () => {
         setEditingIndex(null);
     };
 
-    const getCurrentChordIndex = () => {
-        let beats = 0;
-        for (let i = 0; i < chords.length; i++) {
-            beats += chords[i].beats;
-            if (currentBeat < beats) return i;
-        }
-        return null;
-    };
-
-    const currentChordIndex = getCurrentChordIndex() ?? 0;
     const currentAnalysis = analysis[currentChordIndex];
     const nextAnalysis = analysis[currentChordIndex + 1];
 
