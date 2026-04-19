@@ -10,6 +10,7 @@ const ChordProgressionEditor = () => {
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [currentBeat, setCurrentBeat] = useState<number>(0);
     const [bpm, setBpm] = useState<number>(120);
+    const [shouldLoop, setShouldLoop] = useState<boolean>(true);
 
     useEffect(() => { // runs when dependencies change
         if(!isPlaying) {
@@ -27,7 +28,7 @@ const ChordProgressionEditor = () => {
         if (!isPlaying) return;
         if (getCurrentChordIndex() === null) {
             setCurrentBeat(0);
-            setIsPlaying(false);
+            setIsPlaying(shouldLoop);
         }
         playTick();
     }, [currentBeat]);
@@ -68,6 +69,7 @@ const ChordProgressionEditor = () => {
             <button className={`${isPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-green-600 hover:bg-green-500'} text-white font-bold px-6 py-2 rounded-lg`} onClick={() => setIsPlaying(!isPlaying)}>
                 {isPlaying ? 'Stop' : 'Play'}
             </button>
+            <input type="checkbox" checked={shouldLoop} onChange={e => setShouldLoop(e.target.checked)}></input> <label>Loop?</label>
         </div>
         {editingIndex!==null && (
             <ChordPicker onSelect={handleSelect} onCancel={()=>{setEditingIndex(null);}} initialChord={editingIndex>=0 ? chords[editingIndex] : undefined} />
