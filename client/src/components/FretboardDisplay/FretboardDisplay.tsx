@@ -13,9 +13,10 @@ interface FretboardDisplayProps {
   scaleTones: string[];   // current chord's scale — shown in blue
   targetTones: string[];  // next chord's chord tones — shown in amber
   activeStrings: number[];
+  showCurrentChord: boolean;
 }
 
-const FretboardDisplay = ({ scaleTones, targetTones, activeStrings }: FretboardDisplayProps) => {
+const FretboardDisplay = ({ scaleTones, targetTones, activeStrings, showCurrentChord }: FretboardDisplayProps) => {
   const targetSet = new Set(targetTones);
   const stringSet = new Set(activeStrings);
 
@@ -23,11 +24,13 @@ const FretboardDisplay = ({ scaleTones, targetTones, activeStrings }: FretboardD
   const notes: { string: number; fret: number; kind: 'primary' | 'root' | 'blue' }[] = [];
 
   // Scale tones in blue, but skip any that are also targets (primary takes priority)
-  for (const note of scaleTones) {
-    if (!targetSet.has(note)) {
-      getPositions(note)
-        .filter(pos => stringSet.has(pos.string))
-        .forEach(pos => notes.push({ ...pos, kind: 'blue' }));
+  if(showCurrentChord){
+    for (const note of scaleTones) {
+      if (!targetSet.has(note)) {
+        getPositions(note)
+          .filter(pos => stringSet.has(pos.string))
+          .forEach(pos => notes.push({ ...pos, kind: 'blue' }));
+      }
     }
   }
 

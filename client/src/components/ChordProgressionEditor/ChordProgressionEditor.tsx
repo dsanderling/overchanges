@@ -39,6 +39,7 @@ const ChordProgressionEditor = () => {
     const [bpm, setBpm] = useState<number>(120);
     const [shouldLoop, setShouldLoop] = useState<boolean>(true);
     const [activeStringSet, setActiveStringSet] = useState(STRING_SETS[0]);
+    const [showBlue, setShowBlue] = useState<boolean>(true);
 
     // Refs so the Transport callback always sees fresh values
     const analysisRef = useRef(analysis);
@@ -157,26 +158,33 @@ const ChordProgressionEditor = () => {
         </div>
         {currentAnalysis && (
             <div className="mt-6 flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">Strings:</span>
-                    {STRING_SETS.map(set => (
-                        <button
-                            key={set.label}
-                            onClick={() => setActiveStringSet(set)}
-                            className={`px-3 py-1 rounded text-sm font-medium ${activeStringSet.label === set.label ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-                        >
-                            {set.label}
-                        </button>
-                    ))}
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-400">Strings:</span>
+                        {STRING_SETS.map(set => (
+                            <button
+                                key={set.label}
+                                onClick={() => setActiveStringSet(set)}
+                                className={`px-3 py-1 rounded text-sm font-medium ${activeStringSet.label === set.label ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                            >
+                                {set.label}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input type="checkbox" checked={showBlue} onChange={e => setShowBlue(e.target.checked)} />
+                        <label>Show current chord</label>
+                    </div>
                 </div>
                 <div className="text-sm text-gray-400">
-                    <span className="text-blue-400 font-semibold">Blue</span> = {currentAnalysis.root} {currentAnalysis.mode} scale
+                    {showBlue && <> <span className="text-blue-400 font-semibold">Blue</span> = {currentAnalysis.root} {currentAnalysis.mode} scale </>}
                     {nextAnalysis && <> &nbsp;·&nbsp; <span className="text-amber-400 font-semibold">Amber</span> = {nextAnalysis.root} {nextAnalysis.quality} tones (next chord)</>}
                 </div>
                 <FretboardDisplay
                     scaleTones={currentAnalysis.scaleTones}
                     targetTones={nextAnalysis?.chordTones ?? analysis[0].chordTones}
                     activeStrings={activeStringSet.strings}
+                    showCurrentChord={showBlue}
                 />
             </div>
         )}
