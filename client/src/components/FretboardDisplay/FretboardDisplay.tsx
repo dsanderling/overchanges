@@ -19,7 +19,8 @@ const FretboardDisplay = ({ scaleTones, targetTones, activeStrings }: FretboardD
   const targetSet = new Set(targetTones);
   const stringSet = new Set(activeStrings);
 
-  const notes: { string: number; fret: number; kind: 'primary' | 'blue' }[] = [];
+  const rootNote = targetTones[0];
+  const notes: { string: number; fret: number; kind: 'primary' | 'root' | 'blue' }[] = [];
 
   // Scale tones in blue, but skip any that are also targets (primary takes priority)
   for (const note of scaleTones) {
@@ -30,11 +31,11 @@ const FretboardDisplay = ({ scaleTones, targetTones, activeStrings }: FretboardD
     }
   }
 
-  // Target (next chord) tones in amber, on top
+  // Target (next chord) tones in amber, root gets white border
   for (const note of targetTones) {
     getPositions(note)
       .filter(pos => stringSet.has(pos.string))
-      .forEach(pos => notes.push({ ...pos, kind: 'primary' }));
+      .forEach(pos => notes.push({ ...pos, kind: note === rootNote ? 'root' : 'primary' }));
   }
 
   return (
