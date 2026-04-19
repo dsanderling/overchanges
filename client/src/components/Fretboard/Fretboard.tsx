@@ -84,11 +84,11 @@ const Fretboard = ({
     f => f > visibleFrets.start && f <= visibleFrets.end
   );
 
-  const midY = (stringTop + stringBottom) / 2;
+  const markerY = stringBottom + 12; // below all strings, never overlaps notes
 
   return (
     <FretboardContext.Provider value={ctx}>
-      <svg width={width} height={height} style={{ background: '#1a1209', borderRadius: 8 }}>
+      <svg width={width} height={height + 20} style={{ background: '#1a1209', borderRadius: 8 }}>
         {/* Strings */}
         {Array.from({ length: 6 }, (_, i) => {
           const y = stringY(i + 1, ctx);
@@ -118,18 +118,17 @@ const Fretboard = ({
           />
         ))}
 
-        {/* Fret markers */}
+        {/* Fret markers — rendered below strings so they never hide behind notes */}
         {visibleMarkers.map(f => {
           const x = fretSlotX(f, ctx);
           const isDouble = DOUBLE_MARKERS.includes(f);
-          const spread = (stringBottom - stringTop) / 4;
           return isDouble ? (
             <g key={f}>
-              <circle cx={x} cy={midY - spread} r={5} fill="#3a2f1a" />
-              <circle cx={x} cy={midY + spread} r={5} fill="#3a2f1a" />
+              <circle cx={x - 6} cy={markerY} r={4} fill="#a07840" />
+              <circle cx={x + 6} cy={markerY} r={4} fill="#a07840" />
             </g>
           ) : (
-            <circle key={f} cx={x} cy={midY} r={5} fill="#3a2f1a" />
+            <circle key={f} cx={x} cy={markerY} r={4} fill="#a07840" />
           );
         })}
 

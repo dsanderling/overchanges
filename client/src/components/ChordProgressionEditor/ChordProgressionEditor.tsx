@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import type { Chord } from "../../types/chord";
 import ChordBox from "../ChordBox/ChordBox";
 import ChordPicker from "../ChordPicker/ChordPicker";
-import FretboardDisplay from "../FretboardDisplay/FretboardDisplay";
+import FretboardDisplay, { STRING_SETS } from "../FretboardDisplay/FretboardDisplay";
 import { playTick } from "../../utils/audio";
 
 interface ChordAnalysis {
@@ -22,6 +22,7 @@ const ChordProgressionEditor = () => {
     const [currentBeat, setCurrentBeat] = useState<number>(0);
     const [bpm, setBpm] = useState<number>(120);
     const [shouldLoop, setShouldLoop] = useState<boolean>(true);
+    const [activeStringSet, setActiveStringSet] = useState(STRING_SETS[0]);
 
     useEffect(() => {
         if (chords.length === 0) { setAnalysis([]); return; }
@@ -98,6 +99,18 @@ const ChordProgressionEditor = () => {
         </div>
         {currentAnalysis && (
             <div className="mt-6 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-400">Strings:</span>
+                    {STRING_SETS.map(set => (
+                        <button
+                            key={set.label}
+                            onClick={() => setActiveStringSet(set)}
+                            className={`px-3 py-1 rounded text-sm font-medium ${activeStringSet.label === set.label ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                        >
+                            {set.label}
+                        </button>
+                    ))}
+                </div>
                 <div className="text-sm text-gray-400">
                     <span className="text-blue-400 font-semibold">Blue</span> = {currentAnalysis.root} {currentAnalysis.mode} scale
                     {nextAnalysis && <> &nbsp;·&nbsp; <span className="text-amber-400 font-semibold">Amber</span> = {nextAnalysis.root} {nextAnalysis.quality} tones (next chord)</>}
@@ -105,6 +118,7 @@ const ChordProgressionEditor = () => {
                 <FretboardDisplay
                     scaleTones={currentAnalysis.scaleTones}
                     targetTones={nextAnalysis?.chordTones ?? []}
+                    activeStrings={activeStringSet.strings}
                 />
             </div>
         )}
