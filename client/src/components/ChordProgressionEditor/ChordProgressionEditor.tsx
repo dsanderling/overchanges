@@ -22,8 +22,10 @@ const ChordProgressionEditor = () => {
     const [shouldLoop, setShouldLoop] = useState<boolean>(true);
     const [activeStringSet, setActiveStringSet] = useState(STRING_SETS[0]);
     const [showBlue, setShowBlue] = useState<boolean>(true);
+    const [muteTicks, setMuteTicks] = useState<boolean>(false);
+    const [muteChords, setMuteChords] = useState<boolean>(false);
 
-    const { isPlaying, currentChordIndex, handlePlayStop } = usePlayback(chords, analysis, bpm, shouldLoop);
+    const { isPlaying, currentChordIndex, handlePlayStop } = usePlayback(chords, analysis, bpm, shouldLoop, muteTicks, muteChords);
 
     useEffect(() => {
         if (chords.length === 0) { setAnalysis([]); return; }
@@ -72,6 +74,10 @@ const ChordProgressionEditor = () => {
             </button>
             <input type="checkbox" checked={shouldLoop} onChange={e => setShouldLoop(e.target.checked)} />
             <label>Loop</label>
+            <input type="checkbox" checked={muteTicks} onChange={e => setMuteTicks(e.target.checked)} />
+            <label>Mute Tick</label>
+            <input type="checkbox" checked={muteChords} onChange={e => setMuteChords(e.target.checked)} />
+            <label>Mute Strum</label>
         </div>
         {currentAnalysis && (
             <div className="mt-6 flex flex-col gap-2">

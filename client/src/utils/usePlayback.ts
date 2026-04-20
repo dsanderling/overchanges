@@ -27,6 +27,8 @@ export const usePlayback = (
   analysis: ChordAnalysis[],
   bpm: number,
   shouldLoop: boolean,
+  muteTicks: boolean,
+  muteChords: boolean,
 ) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentChordIndex, setCurrentChordIndex] = useState(0);
@@ -34,11 +36,15 @@ export const usePlayback = (
   const analysisRef = useRef(analysis);
   const chordsRef = useRef(chords);
   const shouldLoopRef = useRef(shouldLoop);
+  const muteTicksRef = useRef(muteTicks);
+  const muteChordsRef = useRef(muteChords);
   const beatRef = useRef(0);
   const prevChordIdxRef = useRef(-1);
 
   useEffect(() => { analysisRef.current = analysis; }, [analysis]);
   useEffect(() => { chordsRef.current = chords; }, [chords]);
+  useEffect(() => { muteTicksRef.current = muteTicks; }, [muteTicks]);
+  useEffect(() => { muteChordsRef.current = muteChords; }, [muteChords]);
   useEffect(() => { shouldLoopRef.current = shouldLoop; }, [shouldLoop]);
   useEffect(() => { Tone.getTransport().bpm.value = bpm; }, [bpm]);
 
@@ -65,6 +71,8 @@ export const usePlayback = (
       const beat = beatRef.current;
       const chords = chordsRef.current;
       const analysis = analysisRef.current;
+      const muteChords = muteChordsRef.current;
+      const muteTicks = muteTicksRef.current;
 
       const chordIdx = getChordIdxForBeat(beat, chords, shouldLoopRef.current);
 
@@ -73,11 +81,12 @@ export const usePlayback = (
         return;
       }
 
-      tick(time);
+      if(!muteTicks) tick(time);
 
+      //TODO: fix bug where a one-chord looping progression doesn't re-strum
       if (chordIdx !== prevChordIdxRef.current) {
         const chordAnalysis = analysis[chordIdx];
-        if (chordAnalysis) strumChord(chordAnalysis.chordTones, time);
+        if (chordAnalysis && !muteChords) strumChord(chordAnalysis.chordTones, time);
         prevChordIdxRef.current = chordIdx;
       }
 
