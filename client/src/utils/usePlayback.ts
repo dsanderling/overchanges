@@ -100,5 +100,16 @@ export const usePlayback = (
 
   const handlePlayStop = () => (isPlaying ? stop() : start());
 
-  return { isPlaying, currentChordIndex, handlePlayStop };
+  const advanceChord = () => {
+    var cur = currentChordIndex;
+    if(cur < chordsRef.current.length - 1) setCurrentChordIndex(cur+1);
+    else setCurrentChordIndex(0);
+  }
+  const rewindChord = () => {
+    var cur = currentChordIndex;
+    if(cur===0) setCurrentChordIndex(chordsRef.current.length - 1);
+    else setCurrentChordIndex(cur-1);
+  }
+
+  return { isPlaying, currentChordIndex, handlePlayStop, advanceChord, rewindChord };
 };

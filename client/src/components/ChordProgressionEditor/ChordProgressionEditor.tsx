@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Chord } from "../../types/chord";
 import ChordBox from "../ChordBox/ChordBox";
 import ChordPicker from "../ChordPicker/ChordPicker";
@@ -25,7 +25,7 @@ const ChordProgressionEditor = () => {
     const [muteTicks, setMuteTicks] = useState<boolean>(false);
     const [muteChords, setMuteChords] = useState<boolean>(false);
 
-    const { isPlaying, currentChordIndex, handlePlayStop } = usePlayback(chords, analysis, bpm, shouldLoop, muteTicks, muteChords);
+    const { isPlaying, currentChordIndex, handlePlayStop, advanceChord, rewindChord } = usePlayback(chords, analysis, bpm, shouldLoop, muteTicks, muteChords);
 
     useEffect(() => {
         if (chords.length === 0) { setAnalysis([]); return; }
@@ -37,6 +37,20 @@ const ChordProgressionEditor = () => {
             .then(r => r.json())
             .then(data => setAnalysis(data.analysis));
     }, [chords]);
+
+    const advanceRef = useRef(advanceChord);
+    const rewindRef = useRef(rewindChord);
+    useEffect(() => { advanceRef.current = advanceChord; }, [advanceChord]);
+    useEffect(() => { rewindRef.current = rewindChord; }, [rewindChord]);
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowLeft') rewindRef.current();
+            else if (e.key === 'ArrowRight') advanceRef.current();
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, []);
 
     const handleSelect = (chord: Chord) => {
         if (editingIndex === -1) {
